@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Магазин - Чат поддержки</title>
+    <style>
+        #chat { border: 1px solid #ccc; padding: 20px; margin: 20px; max-width: 600px; }
+        .message { margin: 10px 0; padding: 8px; background: #f0f0f0; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <h1>Чат поддержки</h1>
+    <div id="chat"></div>
+    <input type="text" id="messageInput" placeholder="Введите сообщение...">
+    <button onclick="sendMessage()">Отправить</button>
+
+    <script>
+        const ws = new WebSocket('ws://localhost:3501/');
+        const chat = document.getElementById('chat');
+        const input = document.getElementById('messageInput');
+
+        ws.onmessage = (event) => {
+            const msg = JSON.parse(event.data);
+            const div = document.createElement('div');
+            div.className = 'message';
+            div.innerHTML = `<strong>${msg.from === 'customers' ? 'Вы' : 'Поддержка'}:</strong> 
+                            ${msg.text} <em>(${new Date(msg.timestamp).toLocaleTimeString()})</em>`;
+            chat.appendChild(div);
+        };
+
+        function sendMessage() {
+            if (input.value.trim()) {
+                ws.send(JSON.stringify({ text: input.value }));
+                input.value = '';
+            }
+        }
+    </script>
+</body>
+</html>
