@@ -11,3 +11,7 @@ curl -X POST -H "Content-Type: application/json" -d '{
   "description": "Описание нового товара",
   "categories": ["Новая категория"]
 }' http://localhost:8330/api/products
+
+Установка необходимых зависимостей для работы:
+* Для GraphQL - npm install graphql
+* Для WebSocket API - npm install ws
