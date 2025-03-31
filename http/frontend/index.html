@@ -2,12 +2,50 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Задание № 3</title>
+    <title>Задание № 4</title>
 </head>
 <body>
     <h1>Каталог товаров</h1>
-    <div id="products">
-        <!-- PRODUCTS -->
-    </div>
+    <div id="products"></div>
+
+    <script>
+        async function loadProducts(fields = ['name', 'price']) {
+            const query = `
+                query ($fields: [String]!) {
+                    products(fields: $fields) {
+                        ${fields.join(' ')}
+                    }
+                }
+            `;
+
+            try {
+                const response = await fetch('/graphql', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query, variables: { fields } })
+                });
+
+                const { data } = await response.json();
+                renderProducts(data.products);
+            } catch (err) {
+                console.error('Error:', err);
+            }
+        }
+
+        function renderProducts(products) {
+            const container = document.getElementById('products');
+            container.innerHTML = products.map(product => `
+                <div style="border:1px solid #ddd; padding:15px; margin:10px; border-radius:5px;">
+                    ${product.name ? `<h3>${product.name}</h3>` : ''}
+                    ${product.price ? `<p>Цена: ${product.price} руб.</p>` : ''}
+                    ${product.description ? `<p>${product.description}</p>` : ''}
+                    ${product.categories ? `<p>Категории: ${product.categories.join(', ')}</p>` : ''}
+                </div>
+            `).join('');
+        }
+
+        // Загрузка с разными наборами полей
+        loadProducts(['name', 'price']); // Можно менять параметры
+    </script>
 </body>
 </html>
