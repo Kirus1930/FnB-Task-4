@@ -20,42 +20,33 @@
     </div>
 
     <script>
-        // GraphQL запрос
+        // Обновленный запрос с выбором полей
         fetch('/graphql', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                query: `{
-                    products(fields: ["name", "price"]) {
-                        name
-                        price
-                    }
-                }`
-            })
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            query: `{
+              products(fields: ["name", "price", "description"]) {
+                name
+                price
+                description
+              }
+            }`
+          })
         })
         .then(res => res.json())
         .then(({ data }) => {
-            data.products.forEach(product => {
-                const div = document.createElement('div');
-                div.className = 'card';
-                div.innerHTML = `<h3>${product.name}</h3><p>${product.price} руб.</p>`;
-                document.getElementById('products').appendChild(div);
-            });
+          data.products.forEach(product => {
+            const div = document.createElement('div');
+            div.className = 'card';
+            div.innerHTML = `
+              <h3>${product.name}</h3>
+              <p>Цена: ${product.price} руб.</p>
+              <p>${product.description}</p>
+            `;
+            document.getElementById('products').appendChild(div);
+          });
         });
-
-        // WebSocket чат
-        const ws = new WebSocket('ws://localhost:8080');
-        ws.onmessage = e => {
-            const msg = document.createElement('div');
-            msg.textContent = e.data;
-            document.getElementById('messages').appendChild(msg);
-        };
-
-        function sendMessage() {
-            const input = document.getElementById('messageInput');
-            ws.send(input.value);
-            input.value = '';
-        }
-    </script>
+    </script>      
 </body>
 </html>
