@@ -1,14 +1,25 @@
 const WebSocket = require('ws');
 const wss = new WebSocket.Server({ port: 8080 });
 
-wss.on('connection', ws => {
-    ws.on('message', message => {
-        wss.clients.forEach(client => {
-            if (client !== ws && client.readyState === WebSocket.OPEN) {
-                client.send(message.toString());
-            }
-        });
-    });
-});
+wss.on('connection', (ws, req) => {
+  const role = new URL(req.url, 'ws://localhost').searchParams.get('role');
+  ws.role = role || 'customer';
 
-console.log('WebSocket server running on ws://localhost:8080');
+  ws.on('message', (message) => {
+    const msg = JSON.parse(message);
+    msg.timestamp = Date.now();
+    
+    wss.clients.forEach(client => {
+      if (client.readyState === WebSocket.OPEN) {
+        // Админы получают все сообщения
+        if (client.role === 'admin') {
+          client.send(JSON.stringify(msg));
+        }
+        // Пользователи получают только ответы поддержки
+        else if (msg.from === 'support') {
+          client.send(JSON.stringify(msg));
+        }
+      }
+    });
+  });
+});
