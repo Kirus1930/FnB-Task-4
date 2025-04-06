@@ -34,6 +34,15 @@
                 input.value = '';
             }
         }
+        function sendMessage() {
+            if (input.value.trim()) {
+                ws.send(JSON.stringify({ 
+                    text: input.value,
+                    from: 'support' // Добавляем роль отправителя
+                }));
+                input.value = '';
+            }
+        }
     </script>
 </body>
 </html>
