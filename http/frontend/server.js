@@ -23,7 +23,6 @@ const schema = buildSchema(`
   }
 `);
 
-// Resolver
 const root = {
   products: async ({ fields }) => {
     const data = await readFile(PRODUCTS_PATH, 'utf8');
