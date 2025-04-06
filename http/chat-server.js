@@ -1,5 +1,5 @@
 const WebSocket = require('ws');
-const wss = new WebSocket.Server({ port: 8080 });
+const wss = new WebSocket.Server({ port: 3501 });
 
 wss.on('connection', (ws, req) => {
   const role = new URL(req.url, 'ws://localhost').searchParams.get('role');
