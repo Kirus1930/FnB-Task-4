@@ -8,15 +8,13 @@ wss.on('connection', (ws, req) => {
   ws.on('message', (message) => {
     const msg = JSON.parse(message);
     msg.timestamp = Date.now();
-    
+    msg.from = ws.role === 'admin' ? 'support' : 'customers'; // Определяем отправителя
+  
     wss.clients.forEach(client => {
       if (client.readyState === WebSocket.OPEN) {
-        // Админы получают все сообщения
         if (client.role === 'admin') {
           client.send(JSON.stringify(msg));
-        }
-        // Пользователи получают только ответы поддержки
-        else if (msg.from === 'support') {
+        } else if (msg.from === 'support') {
           client.send(JSON.stringify(msg));
         }
       }
