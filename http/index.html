@@ -30,7 +30,10 @@
 
         function sendMessage() {
             if (input.value.trim()) {
-                ws.send(JSON.stringify({ text: input.value }));
+                ws.send(JSON.stringify({ 
+                    text: input.value,
+                    from: 'customers' // Добавляем роль отправителя
+                }));
                 input.value = '';
             }
         }
