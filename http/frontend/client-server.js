@@ -79,6 +79,14 @@ wss.on('connection', (socket) => {
   });
 });
 
+const wsBroadcast = (data) => {
+  wss.clients.forEach(client => {
+    if (client.readyState === ws.OPEN) {
+      client.send(JSON.stringify({ type: 'products-update' }));
+    }
+  });
+};
+
 server.listen(PORT, () => {
   console.log(`Frontend server running at http://localhost:${PORT}`);
 });
