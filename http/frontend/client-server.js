@@ -6,7 +6,7 @@ const fs = require('fs').promises;
 const path = require('path');
 const ws = require('ws');
 
-const PORT = 3500;
+const PORT = 3501;
 const PRODUCTS_PATH = path.join(__dirname, '../data/products.json');
 
 // GraphQL Schema
