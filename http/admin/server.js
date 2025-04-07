@@ -21,7 +21,6 @@ wss.on('connection', (socket) => {
 });
 
 const server = http.createServer(async (req, res) => {
-  // ... существующий REST API код ...
 });
 
 server.listen(PORT, () => {
