@@ -7,5 +7,4 @@
 Для отправки запросов необходимо воспользоваться Postman или curl.
 
 Установка необходимых зависимостей для работы:
-* Для GraphQL - npm install graphql
-* Для WebSocket API - npm install ws
+* npm install graphql ws
