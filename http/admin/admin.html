@@ -68,5 +68,95 @@
             if (e.key === 'Enter') sendMessage();
         });
     </script>
+    <!-- Добавьте после секции чата -->
+    <div id="products-management">
+        <h2>Управление товарами</h2>
+    
+        <!-- Форма добавления/редактирования -->
+        <form id="productForm" onsubmit="handleSubmit(event)">
+            <input type="hidden" id="productId">
+            <input type="text" id="name" placeholder="Название" required>
+            <input type="number" id="price" placeholder="Цена" required>
+            <textarea id="description" placeholder="Описание"></textarea>
+            <input type="text" id="categories" placeholder="Категории (через запятую)">
+            <button type="submit">Сохранить</button>
+            <button type="button" onclick="clearForm()">Отмена</button>
+        </form>
+
+        <!-- Список товаров -->
+        <div id="productsList"></div>
+    </div>
+
+    <script>
+        // Загрузка товаров
+        async function loadProducts() {
+            const response = await fetch('/api/products');
+            const products = await response.json();
+            renderProducts(products);
+        }
+
+        // Отображение товаров
+        function renderProducts(products) {
+            const container = document.getElementById('productsList');
+            container.innerHTML = products.map(product => `
+                <div class="product-item">
+                    <h3>${product.name} (ID: ${product.id})</h3>
+                    <p>Цена: ${product.price} руб.</p>
+                    <button onclick="editProduct(${product.id})">Редактировать</button>
+                    <button onclick="deleteProduct(${product.id})">Удалить</button>
+                </div>
+            `).join('');
+        }
+
+        // Удаление товара
+        async function deleteProduct(id) {
+            await fetch(`/api/products/${id}`, { method: 'DELETE' });
+            loadProducts();
+        }
+
+        // Редактирование товара
+        async function editProduct(id) {
+            const response = await fetch(`/api/products/${id}`);
+            const product = await response.json();
+            document.getElementById('productId').value = product.id;
+            document.getElementById('name').value = product.name;
+            document.getElementById('price').value = product.price;
+            document.getElementById('description').value = product.description;
+            document.getElementById('categories').value = product.categories.join(', ');
+        }
+
+        // Обработка формы
+        async function handleSubmit(e) {
+            e.preventDefault();
+            const product = {
+                name: document.getElementById('name').value,
+                price: parseInt(document.getElementById('price').value),
+                description: document.getElementById('description').value,
+                categories: document.getElementById('categories').value.split(',').map(s => s.trim())
+            };
+
+            const id = document.getElementById('productId').value;
+            const method = id ? 'PUT' : 'POST';
+            const url = id ? `/api/products/${id}` : '/api/products';
+
+            await fetch(url, {
+                method,
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(product)
+            });
+
+            clearForm();
+            loadProducts();
+        }
+
+        // Очистка формы
+        function clearForm() {
+            document.getElementById('productForm').reset();
+            document.getElementById('productId').value = '';
+        }
+
+        // Инициализация
+        loadProducts();
+    </script>
 </body>
 </html>
