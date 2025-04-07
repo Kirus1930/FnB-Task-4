@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Админ-панель</title>
+    <style>
+        /* Стили для чата */
+        #chat { 
+            margin: 20px;
+            padding: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            max-width: 500px;
+        }
+        #messages {
+            height: 300px;
+            overflow-y: auto;
+            margin-bottom: 10px;
+            padding: 10px;
+            border: 1px solid #eee;
+        }
+        #messageInput {
+            width: 70%;
+            padding: 8px;
+        }
+        button {
+            padding: 8px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>Админ-панель</h1>
+    
+    <!-- Секция чата -->
+    <div id="chat">
+        <h3>Чат поддержки</h3>
+        <div id="messages"></div>
+        <input type="text" id="messageInput" placeholder="Введите сообщение...">
+        <button onclick="sendMessage()">Отправить</button>
+    </div>
+
+    <script>
+        // Подключение к WebSocket (порт 3501)
+        const socket = new WebSocket('ws://localhost:3501');
+        const messagesDiv = document.getElementById('messages');
+
+        // Обработка входящих сообщений
+        socket.onmessage = (event) => {
+            messagesDiv.innerHTML += `<div>[${new Date().toLocaleTimeString()}] ${event.data}</div>`;
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        };
+
+        // Отправка сообщений
+        function sendMessage() {
+            const input = document.getElementById('messageInput');
+            if (input.value.trim()) {
+                socket.send(`Админ: ${input.value}`);
+                input.value = '';
+            }
+        }
+
+        // Отправка по Enter
+        document.getElementById('messageInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
+    </script>
+</body>
+</html>
