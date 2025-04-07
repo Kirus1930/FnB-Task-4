@@ -67,7 +67,7 @@ const server = http.createServer(async (req, res) => {
 });
 
 // WebSocket Server
-const wss = new ws.Server({ server });
+const wss = new ws.Server({ port: 3500 });
 
 wss.on('connection', (socket) => {
   socket.on('message', (message) => {
