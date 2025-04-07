@@ -21,6 +21,30 @@ wss.on('connection', (socket) => {
 });
 
 const server = http.createServer(async (req, res) => {
+  const parsedUrl = url.parse(req.url, true);
+  const pathSegments = parsedUrl.pathname.split('/').filter(s => s);
+
+  try {
+    // Отдача статики
+    if (req.method === 'GET' && parsedUrl.pathname === '/admin.html') {
+      const html = await fs.readFile(path.join(__dirname, 'admin.html'), 'utf8');
+      res.writeHead(200, {'Content-Type': 'text/html'});
+      res.end(html);
+    }
+    
+    // Остальной REST API код из предыдущих заданий
+    else if (pathSegments[0] === 'api' && pathSegments[1] === 'products') {
+      // ... реализация CRUD операций ...
+    }
+    
+    else {
+      res.writeHead(404);
+      res.end('Not Found');
+    }
+  } catch (err) {
+    res.writeHead(500);
+    res.end('Internal Server Error');
+  }
 });
 
 server.listen(PORT, () => {
