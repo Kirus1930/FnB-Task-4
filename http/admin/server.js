@@ -56,6 +56,7 @@ const server = http.createServer(async (req, res) => {
           res.writeHead(201, {'Content-Type': 'application/json'});
           res.end(JSON.stringify(newProduct));
         });
+        wsBroadcast(); // Отправка сигнала об обновлении
         return;
       }
 
@@ -69,6 +70,7 @@ const server = http.createServer(async (req, res) => {
         const [deleted] = products.splice(index, 1);
         await fs.writeFile(PRODUCTS_PATH, JSON.stringify(products, null, 2));
         res.writeHead(200);
+        wsBroadcast(); // Отправка сигнала об обновлении
         return res.end(JSON.stringify(deleted));
       }
 
@@ -87,6 +89,7 @@ const server = http.createServer(async (req, res) => {
           res.writeHead(200);
           res.end(JSON.stringify(products[index]));
         });
+        wsBroadcast(); // Отправка сигнала об обновлении
         return;
       }
     }
