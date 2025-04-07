@@ -8,7 +8,7 @@ const PORT = 8330;
 const PRODUCTS_PATH = path.join(__dirname, '../data/products.json');
 
 // WebSocket Server
-const wss = new ws.Server({ port: 3501 });
+const wss = new ws.Server({ port: 3500 });
 
 wss.on('connection', (socket) => {
   socket.on('message', (message) => {
