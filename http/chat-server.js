@@ -4,23 +4,29 @@ const http = require('http');
 const server = http.createServer();
 const wss = new WebSocketServer({ server, path: '/chat' });
 
-const CHAT_PORT = 8080;
+wss.on('connection', (ws, req) => {
+  const url = new URL(req.url, `http://${req.headers.host}`);
+  const role = url.searchParams.get('role') || 'customer';
+  ws.role = role;
 
-wss.on('connection', (ws) => {
   ws.on('message', (data) => {
     const message = JSON.parse(data);
+    message.timestamp = new Date().toISOString();
+    message.from = role;
+
     wss.clients.forEach(client => {
-      if (client.readyState === WebSocket.OPEN) {
-        client.send(JSON.stringify({
-          user: message.user,
-          text: message.text,
-          timestamp: new Date().toISOString()
-        }));
+      if (client.readyState === 1) { // OPEN
+        if (
+          (client.role === 'admin' && message.from === 'customer') ||
+          (client.role === 'customer' && message.from === 'admin')
+        ) {
+          client.send(JSON.stringify(message));
+        }
       }
     });
   });
 });
 
-server.listen(CHAT_PORT, () => {
-  console.log(`Chat server running on port ${CHAT_PORT}`);
+server.listen(8080, () => {
+  console.log('Chat server running on ws://localhost:8080/chat');
 });
