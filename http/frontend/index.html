@@ -19,62 +19,36 @@
     </div>
 
     <script>
-        // GraphQL запрос
         async function loadProducts() {
-            const query = `{
-                products(fields: ["name", "price"]) {
-                    name
-                    price
+          const response = await fetch('/graphql', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+              query: `{
+                products(fields: ["name", "price", "description"]) {
+                  name
+                  price
+                  description
                 }
-            }`;
-
-            const response = await fetch('/graphql', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ query })
-            });
-
-            const result = await response.json();
-            renderProducts(result.data.products);
+              }`
+            })
+          });
+          const { data } = await response.json();
+          renderProducts(data.products);
         }
-
+      
         function renderProducts(products) {
-            const container = document.getElementById('products');
-            container.innerHTML = products.map(product => `
-                <div class="card">
-                    <h3>${product.name}</h3>
-                    <p>Цена: ${product.price} руб.</p>
-                </div>
-            `).join('');
+          const container = document.getElementById('products');
+          container.innerHTML = products.map(p => `
+            <div class="card">
+              <h3>${p.name}</h3>
+              <p>Цена: ${p.price} руб.</p>
+              ${p.description ? `<p>${p.description}</p>` : ''}
+            </div>
+          `).join('');
         }
-
-        // WebSocket чат
-        const socket = new WebSocket('ws://localhost:3500');
-        const messagesDiv = document.getElementById('messages');
-
-        socket.onmessage = (event) => {
-            messagesDiv.innerHTML += `<div>${event.data}</div>`;
-            messagesDiv.scrollTop = messagesDiv.scrollHeight;
-        };
-
-        function sendMessage() {
-            const input = document.getElementById('messageInput');
-            socket.send(input.value);
-            input.value = '';
-        }
-
-        // Инициализация
+      
         loadProducts();
-
-        socket.onmessage = (event) => {
-            const data = JSON.parse(event.data);
-            if (data.type === 'products-update') {
-                loadProducts(); // Перезагружаем товары
-            } else {
-                // Обработка сообщений чата
-            }
-        };
-
-    </script>
+      </script>
 </body>
 </html>
