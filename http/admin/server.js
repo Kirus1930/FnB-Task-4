@@ -1,24 +1,19 @@
 const http = require('http');
-const url = require('url');
+const { WebSocketServer } = require('ws');
 const fs = require('fs').promises;
-const path = require('path');
-const ws = require('ws');
 
 const PORT = 8330;
-const PRODUCTS_PATH = path.join(__dirname, '../data/products.json');
+const PRODUCTS_PATH = './data/products.json';
 
-// WebSocket Server
-const wss = new ws.Server({ port: 3500 });
-
-wss.on('connection', (socket) => {
-  socket.on('message', (message) => {
-    wss.clients.forEach(client => {
-      if (client.readyState === ws.OPEN) {
-        client.send(message.toString());
-      }
-    });
+// WebSocket для обновлений
+const wss = new WebSocketServer({ port: 3501 });
+function broadcastUpdate() {
+  wss.clients.forEach(client => {
+    if (client.readyState === 1) {
+      client.send(JSON.stringify({ type: 'products-update' }));
+    }
   });
-});
+}
 
 const server = http.createServer(async (req, res) => {
   const parsedUrl = url.parse(req.url, true);
@@ -56,7 +51,7 @@ const server = http.createServer(async (req, res) => {
           res.writeHead(201, {'Content-Type': 'application/json'});
           res.end(JSON.stringify(newProduct));
         });
-        wsBroadcast(); // Отправка сигнала об обновлении
+        broadcastUpdate(); // Отправка сигнала об обновлении
         return;
       }
 
@@ -70,7 +65,7 @@ const server = http.createServer(async (req, res) => {
         const [deleted] = products.splice(index, 1);
         await fs.writeFile(PRODUCTS_PATH, JSON.stringify(products, null, 2));
         res.writeHead(200);
-        wsBroadcast(); // Отправка сигнала об обновлении
+        broadcastUpdate(); // Отправка сигнала об обновлении
         return res.end(JSON.stringify(deleted));
       }
 
@@ -89,7 +84,7 @@ const server = http.createServer(async (req, res) => {
           res.writeHead(200);
           res.end(JSON.stringify(products[index]));
         });
-        wsBroadcast(); // Отправка сигнала об обновлении
+        broadcastUpdate(); // Отправка сигнала об обновлении
         return;
       }
     }
