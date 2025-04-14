@@ -1,19 +1,8 @@
 # FnB-Task-4
-Для запуска пользовательского сервера введите в командной строке node frontend/client-server.js
-
-Для запуска сервера администрирования введите в командной строке node admin/server.js
-
-Для отправки запросов необходимо воспользоваться Postman или curl.
-
-Для отправки запросов необходимо воспользоваться Postman или curl.
-
-Пример запроса на добавление товара:
-curl -X POST -H "Content-Type: application/json" -d '{
-  "name": "Новый товар",
-  "price": 999,
-  "description": "Описание нового товара",
-  "categories": ["Новая категория"]
-}' http://localhost:8330/api/products
+Для запуска проекта необходимо ввести в командной строке следующие команды:
+node frontend-server.js # порт 3500 (клиентский сервер с GraphQL)
+node admin-server.js # порт 8330 (админский сервер REST API)
+node chat-server.js # порт 8080 (сервер чата WebSocket)
 
 Установка необходимых зависимостей для работы:
 * npm install graphql ws
