@@ -35,30 +35,39 @@
 <body>
     <h1>Админ-панель</h1>
     
-    <!-- Секция чата -->
+    <!-- Чат -->
     <div id="chat">
         <h3>Чат поддержки</h3>
         <div id="messages"></div>
-        <input type="text" id="messageInput" placeholder="Введите сообщение...">
-        <button onclick="sendMessage()">Отправить</button>
+        <input type="text" id="messageInput">
+        <button onclick="sendChatMessage()">Отправить</button>
     </div>
 
     <script>
-        // Подключение к WebSocket (порт 3501)
-        const socket = new WebSocket('ws://localhost:3501');
-        const messagesDiv = document.getElementById('messages');
-
-        // Обработка входящих сообщений
-        socket.onmessage = (event) => {
-            messagesDiv.innerHTML += `<div>[${new Date().toLocaleTimeString()}] ${event.data}</div>`;
-            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        // WebSocket подключение
+        const ws = new WebSocket('ws://localhost:3501');
+        
+        // Обработчик сообщений
+        ws.onmessage = (e) => {
+            const msg = JSON.parse(e.data);
+            if (msg.type === 'products-update') {
+                renderProducts(msg.data);
+            }
+            if (msg.type === 'chat') {
+                document.getElementById('messages').innerHTML += `
+                    <div>[${msg.data.time}] ${msg.data.from}: ${msg.data.text}</div>
+                `;
+            }
         };
 
-        // Отправка сообщений
-        function sendMessage() {
+        // Отправка сообщения чата
+        function sendChatMessage() {
             const input = document.getElementById('messageInput');
             if (input.value.trim()) {
-                socket.send(`Админ: ${input.value}`);
+                ws.send(JSON.stringify({
+                    type: 'chat',
+                    text: input.value
+                }));
                 input.value = '';
             }
         }
@@ -68,7 +77,7 @@
             if (e.key === 'Enter') sendMessage();
         });
     </script>
-    <!-- Добавьте после секции чата -->
+    <!-- Управление товарами -->
     <div id="products-management">
         <h2>Управление товарами</h2>
     
