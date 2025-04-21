@@ -1,16 +1,19 @@
 const http = require('http');
 const { WebSocketServer } = require('ws');
 const fs = require('fs').promises;
+const url = require('url');
+const path = require('path');
 
 const PORT = 8330;
 const PRODUCTS_PATH = './data/products.json';
 
-// WebSocket для обновлений
+// Общий WebSocket Server для всех событий
 const wss = new WebSocketServer({ port: 3501 });
-function broadcastUpdate() {
+
+function broadcast(type, data) {
   wss.clients.forEach(client => {
     if (client.readyState === 1) {
-      client.send(JSON.stringify({ type: 'products-update' }));
+      client.send(JSON.stringify({ type, data }));
     }
   });
 }
@@ -21,11 +24,14 @@ const server = http.createServer(async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
 
   try {
-    // Отдача админской страницы
-    if (req.method === 'GET' && parsedUrl.pathname === '/admin.html') {
-      const html = await fs.readFile(path.join(__dirname, 'admin.html'), 'utf8');
-      res.writeHead(200, {'Content-Type': 'text/html'});
-      return res.end(html);
+    // Отдача статики
+    if (req.method === 'GET') {
+      if (parsedUrl.pathname === '/admin.html') {
+        const html = await fs.readFile(path.join(__dirname, 'admin.html'), 'utf8');
+        res.writeHead(200, { 'Content-Type': 'text/html' });
+        return res.end(html);
+      }
+      return;
     }
 
     // REST API для товаров
@@ -35,57 +41,46 @@ const server = http.createServer(async (req, res) => {
 
       // GET все товары
       if (req.method === 'GET' && !productId) {
-        res.writeHead(200, {'Content-Type': 'application/json'});
+        res.writeHead(200, { 'Content-Type': 'application/json' });
         return res.end(JSON.stringify(products));
       }
 
-      // Добавление товара
+      // Обработка тела запроса
+      let body = await new Promise(resolve => {
+        let data = '';
+        req.on('data', chunk => data += chunk);
+        req.on('end', () => resolve(data));
+      });
+
+      // POST
       if (req.method === 'POST') {
-        let body = '';
-        req.on('data', chunk => body += chunk);
-        req.on('end', async () => {
-          const newProduct = JSON.parse(body);
-          newProduct.id = Math.max(...products.map(p => p.id)) + 1;
-          products.push(newProduct);
-          await fs.writeFile(PRODUCTS_PATH, JSON.stringify(products, null, 2));
-          res.writeHead(201, {'Content-Type': 'application/json'});
-          res.end(JSON.stringify(newProduct));
-        });
-        broadcastUpdate(); // Отправка сигнала об обновлении
-        return;
+        const newProduct = JSON.parse(body);
+        newProduct.id = Math.max(...products.map(p => p.id)) + 1;
+        products.push(newProduct);
+        await fs.writeFile(PRODUCTS_PATH, JSON.stringify(products, null, 2));
+        broadcast('products-update', products);
+        res.writeHead(201, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify(newProduct));
       }
 
-      // Удаление товара
+      // DELETE
       if (req.method === 'DELETE' && productId) {
         const index = products.findIndex(p => p.id === productId);
-        if (index === -1) {
-          res.writeHead(404);
-          return res.end('Not Found');
-        }
+        if (index === -1) return res.end('Not Found');
         const [deleted] = products.splice(index, 1);
         await fs.writeFile(PRODUCTS_PATH, JSON.stringify(products, null, 2));
-        res.writeHead(200);
-        broadcastUpdate(); // Отправка сигнала об обновлении
+        broadcast('products-update', products);
         return res.end(JSON.stringify(deleted));
       }
 
-      // Редактирование товара
+      // PUT
       if (req.method === 'PUT' && productId) {
-        let body = '';
-        req.on('data', chunk => body += chunk);
-        req.on('end', async () => {
-          const index = products.findIndex(p => p.id === productId);
-          if (index === -1) {
-            res.writeHead(404);
-            return res.end('Not Found');
-          }
-          products[index] = {...products[index], ...JSON.parse(body)};
-          await fs.writeFile(PRODUCTS_PATH, JSON.stringify(products, null, 2));
-          res.writeHead(200);
-          res.end(JSON.stringify(products[index]));
-        });
-        broadcastUpdate(); // Отправка сигнала об обновлении
-        return;
+        const index = products.findIndex(p => p.id === productId);
+        if (index === -1) return res.end('Not Found');
+        products[index] = { ...products[index], ...JSON.parse(body) };
+        await fs.writeFile(PRODUCTS_PATH, JSON.stringify(products, null, 2));
+        broadcast('products-update', products);
+        return res.end(JSON.stringify(products[index]));
       }
     }
 
@@ -98,5 +93,19 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(PORT, () => {
-  console.log(`Admin server running at http://localhost:${PORT}`);
+  console.log(`Server running at http://localhost:${PORT}`);
+});
+
+// Обработка чата
+wss.on('connection', ws => {
+  ws.on('message', message => {
+    const msg = JSON.parse(message);
+    if (msg.type === 'chat') {
+      broadcast('chat', { 
+        from: 'Admin', 
+        text: msg.text, 
+        time: new Date().toLocaleTimeString() 
+      });
+    }
+  });
 });
