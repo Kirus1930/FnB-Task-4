@@ -4,19 +4,19 @@ const path = require('path');
 const { graphql, buildSchema } = require('graphql');
 
 const PORT = 3500;
-const PRODUCTS_PATH = path.join(__dirname, '../data/products.json');
+const PRODUCTS_PATH = path.join(__dirname, 'data/products.json');
 
 const schema = buildSchema(`
   type Product {
-    id: Int!
-    name: String!
-    price: Int!
+    id: Int
+    name: String
+    price: Int
     description: String
-    categories: [String!]!
+    categories: [String]
   }
 
   type Query {
-    products(fields: [String!]!): [Product!]!
+    products(fields: [String!]!): [Product]!
   }
 `);
 
@@ -64,5 +64,5 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(PORT, () => {
-  console.log(`Server running at http://localhost:${PORT}`);
+  console.log(`GraphQL server running at http://localhost:${PORT}`);
 });

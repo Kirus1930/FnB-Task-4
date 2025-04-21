@@ -63,26 +63,31 @@
     </div>
 
     <script>
-        // WebSocket
-        const ws = new WebSocket('ws://localhost:3501');
+        // WebSocket для обновлений продуктов
+        const wsProducts = new WebSocket('ws://localhost:3501');
+        // WebSocket для чата
+        const wsChat = new WebSocket('ws://localhost:8080/chat?role=admin');
         
-        // Чат
-        ws.onmessage = (e) => {
+        // Обработка обновлений продуктов
+        wsProducts.onmessage = (e) => {
             const msg = JSON.parse(e.data);
             if (msg.type === 'products-update') {
                 renderProducts(msg.data);
             }
-            if (msg.type === 'chat') {
-                document.getElementById('messages').innerHTML += `
-                    <div>[${msg.data.time}] ${msg.data.from}: ${msg.data.text}</div>
-                `;
-            }
+        };
+
+        // Обработка сообщений чата
+        wsChat.onmessage = (e) => {
+            const msg = JSON.parse(e.data);
+            document.getElementById('messages').innerHTML += `
+                <div>[${new Date(msg.timestamp).toLocaleTimeString()}] ${msg.from}: ${msg.text}</div>
+            `;
         };
 
         function sendChatMessage() {
             const input = document.getElementById('messageInput');
             if (input.value.trim()) {
-                ws.send(JSON.stringify({ type: 'chat', text: input.value }));
+                wsChat.send(JSON.stringify({ text: input.value }));
                 input.value = '';
             }
         }

@@ -15,7 +15,7 @@ wss.on('connection', (ws, req) => {
     message.from = role;
 
     wss.clients.forEach(client => {
-      if (client.readyState === 1) { // OPEN
+      if (client.readyState === 1) {
         if (
           (client.role === 'admin' && message.from === 'customer') ||
           (client.role === 'customer' && message.from === 'admin')
