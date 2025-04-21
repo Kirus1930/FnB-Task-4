@@ -6,4 +6,4 @@
 * node chat-server.js # порт 8080 (сервер чата WebSocket)
 
 Установка необходимых зависимостей для работы:
-* npm install graphql ws
+* npm install graphql
