@@ -7,3 +7,4 @@
 
 Установка необходимых зависимостей для работы:
 * npm install graphql
+* npm install ws
