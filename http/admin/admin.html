@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <title>Админ-панель</title>
     <style>
-        /* Стили для чата */
         #chat { 
             margin: 20px;
             padding: 15px;
@@ -30,6 +29,11 @@
             border: none;
             cursor: pointer;
         }
+        .product-item {
+            margin: 10px;
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
     </style>
 </head>
 <body>
@@ -43,11 +47,26 @@
         <button onclick="sendChatMessage()">Отправить</button>
     </div>
 
+    <!-- Управление товарами -->
+    <div id="products-management">
+        <h2>Управление товарами</h2>
+        <form id="productForm" onsubmit="handleSubmit(event)">
+            <input type="hidden" id="productId">
+            <input type="text" id="name" placeholder="Название" required>
+            <input type="number" id="price" placeholder="Цена" required>
+            <textarea id="description" placeholder="Описание"></textarea>
+            <input type="text" id="categories" placeholder="Категории (через запятую)">
+            <button type="submit">Сохранить</button>
+            <button type="button" onclick="clearForm()">Отмена</button>
+        </form>
+        <div id="productsList"></div>
+    </div>
+
     <script>
-        // WebSocket подключение
+        // WebSocket
         const ws = new WebSocket('ws://localhost:3501');
         
-        // Обработчик сообщений
+        // Чат
         ws.onmessage = (e) => {
             const msg = JSON.parse(e.data);
             if (msg.type === 'products-update') {
@@ -60,51 +79,21 @@
             }
         };
 
-        // Отправка сообщения чата
         function sendChatMessage() {
             const input = document.getElementById('messageInput');
             if (input.value.trim()) {
-                ws.send(JSON.stringify({
-                    type: 'chat',
-                    text: input.value
-                }));
+                ws.send(JSON.stringify({ type: 'chat', text: input.value }));
                 input.value = '';
             }
         }
 
-        // Отправка по Enter
-        document.getElementById('messageInput').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') sendMessage();
-        });
-    </script>
-    <!-- Управление товарами -->
-    <div id="products-management">
-        <h2>Управление товарами</h2>
-    
-        <!-- Форма добавления/редактирования -->
-        <form id="productForm" onsubmit="handleSubmit(event)">
-            <input type="hidden" id="productId">
-            <input type="text" id="name" placeholder="Название" required>
-            <input type="number" id="price" placeholder="Цена" required>
-            <textarea id="description" placeholder="Описание"></textarea>
-            <input type="text" id="categories" placeholder="Категории (через запятую)">
-            <button type="submit">Сохранить</button>
-            <button type="button" onclick="clearForm()">Отмена</button>
-        </form>
-
-        <!-- Список товаров -->
-        <div id="productsList"></div>
-    </div>
-
-    <script>
-        // Загрузка товаров
+        // Управление товарами
         async function loadProducts() {
             const response = await fetch('/api/products');
             const products = await response.json();
             renderProducts(products);
         }
 
-        // Отображение товаров
         function renderProducts(products) {
             const container = document.getElementById('productsList');
             container.innerHTML = products.map(product => `
@@ -117,24 +106,20 @@
             `).join('');
         }
 
-        // Удаление товара
         async function deleteProduct(id) {
             await fetch(`/api/products/${id}`, { method: 'DELETE' });
             loadProducts();
         }
 
-        // Редактирование товара
         async function editProduct(id) {
-            const response = await fetch(`/api/products/${id}`);
-            const product = await response.json();
+            const product = await (await fetch(`/api/products/${id}`)).json();
             document.getElementById('productId').value = product.id;
             document.getElementById('name').value = product.name;
             document.getElementById('price').value = product.price;
             document.getElementById('description').value = product.description;
-            document.getElementById('categories').value = product.categories.join(', ');
+            document.getElementById('categories').value = product.categories?.join(', ') || '';
         }
 
-        // Обработка формы
         async function handleSubmit(e) {
             e.preventDefault();
             const product = {
@@ -143,46 +128,22 @@
                 description: document.getElementById('description').value,
                 categories: document.getElementById('categories').value.split(',').map(s => s.trim())
             };
-
             const id = document.getElementById('productId').value;
-            const method = id ? 'PUT' : 'POST';
-            const url = id ? `/api/products/${id}` : '/api/products';
-
-            await fetch(url, {
-                method,
-                headers: {'Content-Type': 'application/json'},
+            await fetch(id ? `/api/products/${id}` : '/api/products', {
+                method: id ? 'PUT' : 'POST',
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(product)
             });
-
             clearForm();
             loadProducts();
         }
 
-        // Очистка формы
         function clearForm() {
             document.getElementById('productForm').reset();
             document.getElementById('productId').value = '';
         }
 
-        // Инициализация
         loadProducts();
-    </script>
-
-    <script>
-        const ws = new WebSocket('ws://localhost:8080/chat?role=admin');
-    
-        ws.onmessage = (e) => {
-            const msg = JSON.parse(e.data);
-            const div = document.createElement('div');
-            div.innerHTML = `[${msg.from}] ${msg.text}`;
-            document.getElementById('messages').appendChild(div);
-        };
-  
-        function sendMessage() {
-            const input = document.getElementById('messageInput');
-            ws.send(JSON.stringify({ text: input.value }));
-            input.value = '';
-        }
     </script>
 </body>
 </html>
